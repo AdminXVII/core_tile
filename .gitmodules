@@ -30,3 +30,6 @@
 [submodule "rtl/core/sargantana"]
 	path = rtl/core/sargantana
 	url = ../sargantana.git
+[submodule "rtl/vortex"]
+	path = fpga/vortex
+	url = https://github.com/vortexgpgpu/vortex

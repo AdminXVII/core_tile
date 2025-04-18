@@ -8,6 +8,7 @@ FLAGS ?=
 MEEP_VERI_FLAGS = \
 	$(foreach flag, $(FLAGS), -D$(flag)) \
 	-DVERILATOR_GCC \
+	+define+SV_DPI \
 	+define+SIM_COMMIT_LOG \
 	+define+SIM_COMMIT_LOG_DPI \
 	+define+SIM_KONATA_DUMP \
@@ -35,6 +36,7 @@ MEEP_SIM_VERILOG_SRCS = $(SIM_VERILOG_SRCS) $(shell cat $(PROJECT_DIR)/fpga/comm
 
 .patched:
 		echo "Applying patches to axi and common_cells submodules"
+		cp $(MEEP_SIM_DIR)/../../vortex-filelist.f $(MEEP_SIM_DIR)/../../vortex/filelist.f
 		cd $(MEEP_SIM_DIR)/../../common/rtl/axi && git apply $(MEEP_SIM_DIR)/../../common/patches/axi.patch && cd -
 		cd $(MEEP_SIM_DIR)/../../common/rtl/common_cells && git apply $(MEEP_SIM_DIR)/../../common/patches/common_cells.patch && cd -
 		touch .patched

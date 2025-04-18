@@ -292,6 +292,7 @@ module sargantana_wrapper(
         .axi_o(core2xbar_bus[0]),
 
         .time_irq_i(time_irq),
+        .irq_i(vortex_irq),
         .time_i(time_value)
     );
 

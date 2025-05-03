@@ -1,9 +1,9 @@
-diff --git a/src/mem_to_banks.sv b/src/mem_to_banks.sv
-index ca215bd..73addb6 100644
---- a/src/mem_to_banks.sv
-+++ b/src/mem_to_banks.sv
-@@ -115,7 +115,7 @@ module mem_to_banks #(
-     assign bank_req[i].atop  = atop_i;
+diff --git a/src/mem_to_banks_detailed.sv b/src/mem_to_banks_detailed.sv
+index 8255f00..6aa19f8 100644
+--- a/src/mem_to_banks_detailed.sv
++++ b/src/mem_to_banks_detailed.sv
+@@ -132,7 +132,7 @@ module mem_to_banks_detailed #(
+     assign bank_req[i].wuser = wuser_i;
      assign bank_req[i].we    = we_i;
      stream_fifo #(
 -      .FALL_THROUGH ( 1'b1         ),

@@ -41,6 +41,7 @@ rtl/common_cells/src/stream_filter.sv
 rtl/common_cells/src/stream_fork.sv
 rtl/common_cells/src/stream_intf.sv
 rtl/common_cells/src/stream_join.sv
+rtl/common_cells/src/stream_join_dynamic.sv
 rtl/common_cells/src/stream_mux.sv
 rtl/common_cells/src/stream_throttle.sv
 rtl/common_cells/src/sub_per_hash.sv
@@ -52,6 +53,7 @@ rtl/common_cells/src/cdc_reset_ctrlr_pkg.sv
 rtl/common_cells/src/cdc_2phase.sv
 rtl/common_cells/src/cdc_4phase.sv
 rtl/common_cells/src/addr_decode.sv
+rtl/common_cells/src/addr_decode_dync.sv
 rtl/common_cells/src/addr_decode_napot.sv
 rtl/common_cells/src/cb_filter.sv
 rtl/common_cells/src/cdc_fifo_2phase.sv
@@ -79,6 +81,7 @@ rtl/common_cells/src/stream_xbar.sv
 rtl/common_cells/src/cdc_fifo_gray_clearable.sv
 rtl/common_cells/src/cdc_2phase_clearable.sv
 rtl/common_cells/src/mem_to_banks.sv
+rtl/common_cells/src/mem_to_banks_detailed.sv
 rtl/common_cells/src/stream_arbiter.sv
 rtl/common_cells/src/stream_omega_net.sv
 
@@ -134,6 +137,7 @@ rtl/axi/src/axi_to_mem.sv
 rtl/axi/src/axi_iw_converter.sv
 rtl/axi/src/axi_lite_xbar.sv
 rtl/axi/src/axi_xbar.sv
+rtl/axi/src/axi_xbar_unmuxed.sv
 rtl/axi/src/axi_to_mem_banked.sv
 rtl/axi/src/axi_to_mem_interleaved.sv
 rtl/axi/src/axi_to_mem_split.sv

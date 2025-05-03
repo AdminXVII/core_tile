@@ -37,8 +37,6 @@
 
 
 // Vortex-specific
-`define PLATFORM_MEMORY_ADDR_WIDTH `MEM_ADDR_WIDTH
 `define PLATFORM_MERGED_MEMORY_INTERFACE 1
-`define PLATFORM_MEMORY_NUM_BANKS 4
-`define MEM_BLOCK_SIZE `MEM_DATA_WIDTH
+`define XLEN_64 1
 `include "VX_define.vh"

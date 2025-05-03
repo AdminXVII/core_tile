@@ -109,6 +109,10 @@ hw/rtl/libs/VX_toggle_buffer.sv
 hw/rtl/libs/VX_transpose.sv
 
 +incdir+hw/dpi/
++incdir+sim/common/
+hw/dpi/float_dpi.cpp
+hw/dpi/util_dpi.cpp
++incdir+third_party/softfloat/source/include/
 
 +incdir+hw/rtl/fpu/
 hw/rtl/fpu/VX_fpu_pkg.sv

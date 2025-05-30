@@ -18,8 +18,8 @@ VERI_FLAGS = \
 	--top-module $(TOP_MODULE) \
 	--unroll-count 256 \
 	-Wno-lint -Wno-style -Wno-STMTDLY -Wno-fatal \
-	-CFLAGS "-std=c++17 -I$(SPIKE_DIR)/riscv-isa-sim/ -I$(MEEP_SIM_DIR)/../../vortex/sim/common/" \
-	-LDFLAGS "-pthread -L$(SPIKE_DIR)/build/ -Wl,-rpath=$(SPIKE_DIR)/build/ -ldisasm -ldl" \
+	-CFLAGS "-std=c++17 -I$(SPIKE_DIR)/riscv-isa-sim/ -I$(MEEP_SIM_DIR)/../../vortex/sim/common/ -g" \
+	-LDFLAGS "-pthread -L$(SPIKE_DIR)/build/ -Wl,-rpath=$(SPIKE_DIR)/build/ -ldisasm -ldl -Wl,-rpath,$(THIRD_PARTY_DIR)/ramulator -L$(THIRD_PARTY_DIR)/ramulator -lramulator -pthread $(THIRD_PARTY_DIR)/softfloat/build/Linux-x86_64-GCC/softfloat.a" \
 	--exe \
 	--trace-fst \
 	--trace-max-array 512 \

@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <memory>
 #include <csignal>
+#include <sys/resource.h>
 
 #include <chrono>
 #include <thread>
@@ -18,6 +19,14 @@
 
 using std::string;
 using std::vector;
+
+static bool _sim_trace_enabled = true;
+bool sim_trace_enabled() {
+    return _sim_trace_enabled;
+}
+void sim_trace_enable(bool enabled) {
+    _sim_trace_enabled = enabled;
+}
 
 void print_help(){
 
@@ -57,6 +66,24 @@ void signalHandler( int signum ) {
 }
 
 int main(int argc, char** argv) {
+    const rlim_t kStackSize = 8L * 1024L * 1024L * 1024L;   // min stack size = 8 GB
+    struct rlimit rl;
+    int result;
+
+    result = getrlimit(RLIMIT_STACK, &rl);
+    if (result == 0)
+    {
+        if (rl.rlim_cur < kStackSize)
+        {
+            rl.rlim_cur = kStackSize;
+            result = setrlimit(RLIMIT_STACK, &rl);
+            if (result != 0)
+            {
+                fprintf(stderr, "setrlimit returned result = %d\n", result);
+            }
+        }
+    }
+
     VerilatedContext* ctx = new VerilatedContext;
 
     // *** Argument Parsing ***

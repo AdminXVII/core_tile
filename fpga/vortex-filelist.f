@@ -112,6 +112,8 @@ hw/rtl/libs/VX_transpose.sv
 +incdir+sim/common/
 hw/dpi/float_dpi.cpp
 hw/dpi/util_dpi.cpp
+sim/common/rvfloats.cpp
+sim/common/softfloat_ext.cpp
 +incdir+third_party/softfloat/source/include/
 
 +incdir+hw/rtl/fpu/

@@ -115,7 +115,7 @@ module sargantana_wrapper(
     // *** AXI Crossbar ***
 
     localparam axi_pkg::xbar_cfg_t xbar_cfg = '{
-        NoSlvPorts:         1,
+        NoSlvPorts:         2,
         MaxMstTrans:        10,
         MaxSlvTrans:        6,
         FallThrough:        1'b0,
@@ -127,11 +127,11 @@ module sargantana_wrapper(
         AxiAddrWidth:       `AXI_XBAR_ADDR_WIDTH,
         AxiDataWidth:       `AXI_XBAR_DATA_WIDTH,
         `ifdef VERILATOR
-        NoAddrRules:        4, // +1 for tohost support
-        NoMstPorts:         4
+        NoAddrRules:        5, // +1 for tohost support
+        NoMstPorts:         5
         `else
-        NoAddrRules:        3,
-        NoMstPorts:         3
+        NoAddrRules:        4,
+        NoMstPorts:         4
         `endif
     };
 
@@ -148,6 +148,12 @@ module sargantana_wrapper(
             idx: `TIMER_XBAR_ID,
             start_addr: `TIMER_BASE_ADDR,
             end_addr: `TIMER_END_ADDR,
+            default: '0
+        },
+        rule_t'{
+            idx: `VORTEX_XBAR_ID,
+            start_addr: `VORTEX_BASE_ADDR,
+            end_addr: `VORTEX_END_ADDR,
             default: '0
         },
         rule_t'{
@@ -237,6 +243,18 @@ module sargantana_wrapper(
         .AXI_DATA_WIDTH(`AXI_XBAR_DATA_WIDTH),
         .AXI_ID_WIDTH(`AXI_XBAR_PERI_ID_WIDTH),
         .AXI_USER_WIDTH(`AXI_XBAR_USER_WIDTH)
+    ) addr_trans_vortex_inst (
+        .slv(xbar2tran_bus[`VORTEX_XBAR_ID]),
+        .mst_aw_addr_i(xbar2tran_bus[`VORTEX_XBAR_ID].aw_addr - `VORTEX_BASE_ADDR),
+        .mst_ar_addr_i(xbar2tran_bus[`VORTEX_XBAR_ID].ar_addr - `VORTEX_BASE_ADDR),
+        .mst(xbar2peri_bus[`VORTEX_XBAR_ID])
+    );
+
+    axi_modify_address_intf #(
+        .AXI_SLV_PORT_ADDR_WIDTH(`AXI_XBAR_ADDR_WIDTH),
+        .AXI_DATA_WIDTH(`AXI_XBAR_DATA_WIDTH),
+        .AXI_ID_WIDTH(`AXI_XBAR_PERI_ID_WIDTH),
+        .AXI_USER_WIDTH(`AXI_XBAR_USER_WIDTH)
     ) addr_trans_mem_inst (
         .slv(xbar2tran_bus[`MEM_XBAR_ID]),
         .mst_aw_addr_i(xbar2tran_bus[`MEM_XBAR_ID].aw_addr - `MEM_BASE_ADDR),
@@ -258,6 +276,8 @@ module sargantana_wrapper(
     `AXI_ASSIGN_TO_REQ(xbar2peri_req[`TIMER_XBAR_ID], xbar2peri_bus[`TIMER_XBAR_ID])
     `AXI_ASSIGN_FROM_RESP(xbar2peri_bus[`TIMER_XBAR_ID], xbar2peri_resp[`TIMER_XBAR_ID])
 
+    `AXI_ASSIGN_TO_REQ(xbar2peri_req[`VORTEX_XBAR_ID], xbar2peri_bus[`VORTEX_XBAR_ID])
+    `AXI_ASSIGN_FROM_RESP(xbar2peri_bus[`VORTEX_XBAR_ID], xbar2peri_resp[`VORTEX_XBAR_ID])
 
     // TIMER signals
     logic timer_irq;
@@ -272,6 +292,7 @@ module sargantana_wrapper(
         .axi_o(core2xbar_bus[0]),
 
         .time_irq_i(time_irq),
+        .irq_i(vortex_irq),
         .time_i(time_value)
     );
 
@@ -496,5 +517,169 @@ module sargantana_wrapper(
     );
 
     `endif
+
+
+  /* VORTEX */
+
+  // Signals
+  logic vortex_irq;
+  
+  // Downsize 512b -> 32b
+
+  fpga_pkg::axi32_req_t vortex_axi32_req;
+  fpga_pkg::axi32_resp_t vortex_axi32_resp;
+
+  axi_dw_downsizer #(
+      .AxiSlvPortDataWidth(`AXI_XBAR_DATA_WIDTH),
+      .AxiMstPortDataWidth(32),
+      .AxiAddrWidth(`AXI_XBAR_ADDR_WIDTH),
+      .AxiIdWidth(8),
+      .aw_chan_t(peri_axi_aw_chan_t),
+      .mst_w_chan_t(axi32_w_chan_t),
+      .slv_w_chan_t(peri_axi_w_chan_t),
+      .b_chan_t(peri_axi_b_chan_t),
+      .ar_chan_t(peri_axi_ar_chan_t),
+      .mst_r_chan_t(axi32_r_chan_t),
+      .slv_r_chan_t(peri_axi_r_chan_t),
+      .axi_mst_req_t(axi32_req_t),
+      .axi_mst_resp_t(axi32_resp_t),
+      .axi_slv_req_t(peri_axi_req_t),
+      .axi_slv_resp_t(peri_axi_resp_t)
+  ) axi_downsizer_vortex_inst (
+      .clk_i(clk_i),
+      .rst_ni(reset),
+      .slv_req_i(xbar2peri_req[`VORTEX_XBAR_ID]),
+      .slv_resp_o(xbar2peri_resp[`VORTEX_XBAR_ID]),
+      .mst_req_o(vortex_axi32_req),
+      .mst_resp_i(vortex_axi32_resp)
+  );
+
+  // Convert AXI to AXI-Lite
+
+  fpga_pkg::axi_lite_req_t vortex_req;
+  fpga_pkg::axi_lite_resp_t vortex_resp;
+
+  axi_to_axi_lite #(
+      .AxiAddrWidth(`AXI_XBAR_ADDR_WIDTH),
+      .AxiDataWidth(32),
+      .AxiIdWidth(8),
+      .AxiUserWidth(`AXI_XBAR_USER_WIDTH),
+      .AxiMaxReadTxns(1),
+      .AxiMaxWriteTxns(1),
+      .full_req_t(fpga_pkg::axi32_req_t),
+      .full_resp_t(fpga_pkg::axi32_resp_t),
+      .lite_req_t(fpga_pkg::axi_lite_req_t),
+      .lite_resp_t(fpga_pkg::axi_lite_resp_t)
+  ) axi_lite_vortex_converter (
+      .clk_i(clk_i),
+      .rst_ni(reset),
+      .test_i(1'b0),
+      .slv_req_i(vortex_axi32_req),
+      .slv_resp_o(vortex_axi32_resp),
+      .mst_req_o(vortex_req),
+      .mst_resp_i(vortex_resp)
+  );
+
+  //
+
+  AXI_BUS #(
+      .AXI_ADDR_WIDTH (64),
+      .AXI_DATA_WIDTH (sargantana_hpdc_pkg::HPDCACHE_MEM_DATA_WIDTH),
+      .AXI_ID_WIDTH   (sargantana_hpdc_pkg::HPDCACHE_MEM_TID_WIDTH),
+      .AXI_USER_WIDTH (11)
+  ) axi_vortex_to_atomic();
+
+  fpga_pkg::core_axi_req_t axi_vortex_req;
+  fpga_pkg::core_axi_resp_t axi_vortex_resp;
+
+  `AXI_ASSIGN_FROM_REQ(axi_vortex_to_atomic, axi_vortex_req)
+  `AXI_ASSIGN_TO_RESP(axi_vortex_resp, axi_vortex_to_atomic)
+
+  axi_riscv_atomics_wrap #(
+      .AXI_ADDR_WIDTH(64),
+      .AXI_DATA_WIDTH(sargantana_hpdc_pkg::HPDCACHE_MEM_DATA_WIDTH),
+      .AXI_ID_WIDTH(sargantana_hpdc_pkg::HPDCACHE_MEM_TID_WIDTH),
+      .AXI_USER_WIDTH(11),
+      .AXI_MAX_READ_TXNS(1),
+      .AXI_MAX_WRITE_TXNS(1),
+      .RISCV_WORD_WIDTH(64)
+  ) atomics_processor (
+      .clk_i(clk_i),
+      .rst_ni(reset),
+      .mst(core2xbar_bus[1]),
+      .slv(axi_vortex_to_atomic)
+  );
+
+  // TODO: what do we do with the prot signals?
+  logic unused = |{timer_req.aw.prot, timer_req.ar.prot};
+
+  vortex_afu #(
+    .C_S_AXI_CTRL_ADDR_WIDTH ( `AXI_XBAR_ADDR_WIDTH ),
+    .C_S_AXI_CTRL_DATA_WIDTH ( 32 ),
+    .C_M_AXI_MEM_ID_WIDTH    ( 32'(sargantana_hpdc_pkg::HPDCACHE_MEM_TID_WIDTH) ),
+    .C_M_AXI_MEM_DATA_WIDTH  ( `AXI_XBAR_DATA_WIDTH ),
+    .C_M_AXI_MEM_ADDR_WIDTH  ( `AXI_XBAR_ADDR_WIDTH ),
+    .C_M_AXI_MEM_NUM_BANKS   ( `PLATFORM_MEMORY_NUM_BANKS ) // TODO: More banks?
+  ) vortex (
+    // System signals
+    .ap_clk   ( clk_i ),
+    .ap_rst_n ( reset ),
+
+    // AXI4 master interface
+    .m_axi_mem_0_awvalid ( axi_vortex_req.aw_valid ),
+    .m_axi_mem_0_awready ( axi_vortex_resp.aw_ready ),
+    .m_axi_mem_0_awaddr  ( axi_vortex_req.aw.addr ),
+    .m_axi_mem_0_awid    ( axi_vortex_req.aw.id ),
+    .m_axi_mem_0_awlen   ( axi_vortex_req.aw.len ),
+
+    .m_axi_mem_0_wvalid  ( axi_vortex_req.w_valid ),
+    .m_axi_mem_0_wready  ( axi_vortex_resp.w_ready ),
+    .m_axi_mem_0_wdata   ( axi_vortex_req.w.data ),
+    .m_axi_mem_0_wstrb   ( axi_vortex_req.w.strb ),
+    .m_axi_mem_0_wlast   ( axi_vortex_req.w.last ),
+
+    .m_axi_mem_0_bvalid  ( axi_vortex_resp.b_valid ),
+    .m_axi_mem_0_bready  ( axi_vortex_req.b_ready ),
+    .m_axi_mem_0_bresp   ( axi_vortex_resp.b.resp ),
+    .m_axi_mem_0_bid     ( axi_vortex_resp.b.id ),
+
+    .m_axi_mem_0_arvalid ( axi_vortex_req.ar_valid ),
+    .m_axi_mem_0_arready ( axi_vortex_resp.ar_ready ),
+    .m_axi_mem_0_araddr  ( axi_vortex_req.ar.addr ),
+    .m_axi_mem_0_arid    ( axi_vortex_req.ar.id ),
+    .m_axi_mem_0_arlen   ( axi_vortex_req.ar.len ),
+
+    .m_axi_mem_0_rvalid  ( axi_vortex_resp.r_valid ),
+    .m_axi_mem_0_rready  ( axi_vortex_req.r_ready ),
+    .m_axi_mem_0_rdata   ( axi_vortex_resp.r.data ),
+    .m_axi_mem_0_rlast   ( axi_vortex_resp.r.last ),
+    .m_axi_mem_0_rid     ( axi_vortex_resp.r.id ),
+    .m_axi_mem_0_rresp   ( axi_vortex_resp.r.resp ),
+
+    // AXI4-Lite slave interface
+    .s_axi_ctrl_awvalid( vortex_req.aw_valid ),
+    .s_axi_ctrl_awready( vortex_resp.aw_ready ),
+    .s_axi_ctrl_awaddr ( vortex_req.aw.addr ),
+
+    .s_axi_ctrl_wvalid ( vortex_req.w_valid ),
+    .s_axi_ctrl_wready ( vortex_resp.w_ready ),
+    .s_axi_ctrl_wdata  ( vortex_req.w.data ),
+    .s_axi_ctrl_wstrb  ( vortex_req.w.strb ),
+
+    .s_axi_ctrl_bvalid ( vortex_resp.b_valid ),
+    .s_axi_ctrl_bready ( vortex_req.b_ready ),
+    .s_axi_ctrl_bresp  ( vortex_resp.b.resp ),
+
+    .s_axi_ctrl_arvalid ( vortex_req.ar_valid ),
+    .s_axi_ctrl_arready ( vortex_resp.ar_ready ),
+    .s_axi_ctrl_araddr  ( vortex_req.ar.addr ),
+
+    .s_axi_ctrl_rvalid ( vortex_resp.r_valid ),
+    .s_axi_ctrl_rready ( vortex_req.r_ready ),
+    .s_axi_ctrl_rdata  ( vortex_resp.r.data ),
+    .s_axi_ctrl_rresp  ( vortex_resp.r.resp ),
+
+    .interrupt ( vortex_irq )
+  );
 
 endmodule

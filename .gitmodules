@@ -1,16 +1,16 @@
 [submodule "rtl/mmu"]
 	path = rtl/mmu
-	url = ../mmu.git
+	url = https://github.com/bsc-loca/mmu.git
 	branch = sargantana
 [submodule "tb/tb_torture/riscv-torture"]
 	path = tb/tb_torture/riscv-torture
 	url = https://github.com/ucb-bar/riscv-torture.git
 [submodule "simulator/reference/riscv-isa-sim"]
 	path = simulator/reference/riscv-isa-sim
-	url = ../riscv-isa-sim.git
+	url = https://github.com/bsc-loca/riscv-isa-sim.git
 [submodule "rtl/dcache"]
 	path = rtl/dcache
-	url = ../cv-hpdcache.git
+	url = https://github.com/bsc-loca/cv-hpdcache.git
 [submodule "fpga/common/rtl/axi"]
 	path = fpga/common/rtl/axi
 	url = https://github.com/pulp-platform/axi.git
@@ -22,11 +22,14 @@
 	url = https://github.com/pulp-platform/common_cells.git
 [submodule "rtl/icache"]
 	path = rtl/icache
-	url = ../instruction_cache.git
+	url = https://github.com/bsc-loca/instruction_cache.git
 	branch = ft/cacheline_64b
 [submodule "riscv-tests"]
 	path = riscv-tests
-	url = ../riscv-tests.git
+	url = https://github.com/bsc-loca/riscv-tests.git
 [submodule "rtl/core/sargantana"]
 	path = rtl/core/sargantana
-	url = ../sargantana.git
+	url = https://github.com/bsc-loca/sargantana.git
+[submodule "rtl/vortex"]
+	path = fpga/vortex
+	url = https://github.com/vortexgpgpu/vortex

@@ -27,6 +27,7 @@ module axi_wrapper (
     AXI_BUS.Master axi_o,
 
     input logic time_irq_i,
+    input logic irq_i,
     input logic [63:0] time_i
 );
 
@@ -164,7 +165,7 @@ module axi_wrapper (
         .mem_resp_uc_read_i(mem_resp_uc_read),
 
         .time_irq_i(time_irq_i),
-        .irq_i(1'b0),
+        .irq_i(irq_i),
         .time_i(time_i)
     );
 
